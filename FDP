@@ -1,0 +1,30 @@
+# Set seed for reproducibility
+set.seed(123)
+pathotypes <- paste("Pathotype", 1:80)
+groups <- rep(c("A", "B", "C", "D", "E"), times = c(16, 16, 16, 16, 16))  # 16 pathotypes per group
+df <- data.frame(Pathotype = pathotypes, Group = groups)
+
+similarity_matrix <- matrix(runif(80 * 80, min = 0, max = 1), nrow = 80, ncol = 80)
+
+similarity_matrix <- (similarity_matrix + t(similarity_matrix)) / 2
+
+diag(similarity_matrix) <- 1
+
+head(similarity_matrix)
+library(igraph)
+threshold <- 0.7
+graph <- graph.adjacency(similarity_matrix > threshold, mode = "undirected", diag = FALSE)
+
+V(graph)$name <- df$Pathotype
+V(graph)$group <- df$Group
+library(ggraph)
+library(tidygraph)
+graph_tidy <- as_tbl_graph(graph)
+biku<-ggraph(graph_tidy, layout = 'fr') +  # 'fr' stands for Fruchterman-Reingold layout
+  geom_edge_link() +  # Add edges
+  geom_node_point(aes(color = group), size = 5) +  # Add nodes, color by group
+  geom_node_text(aes(label = name), repel = TRUE) +  # Add node labels
+  theme_void()  # Clean background
+library(ggplot2)
+getwd()
+ggsave("force_directed_graph.jpeg", plot = biku,  width = 15, height = 12, dpi = 600)
